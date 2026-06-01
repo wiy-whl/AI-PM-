@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI PM 面试特训系统</title>
+    <style>
+        /* ========== CSS Variables ========== */
+        :root[data-theme="light"] {
+            --bg-main: #f0efe9;
+            --bg-surface: #ffffff;
+            --bg-surface-2: #f7f6f2;
+            --border: #e2dfd6;
+            --border-light: #eeece5;
+            --text: #1a1815;
+            --text-secondary: #6b6560;
+            --text-muted: #9e978d;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-bg: rgba(37,99,235,0.06);
+            --red: #dc2626;
+            --red-bg: rgba(220,38,38,0.06);
+            --green: #16a34a;
+            --green-bg: rgba(22,163,74,0.06);
+            --yellow: #d97706;
+            --yellow-bg: rgba(217,119,6,0.06);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.06);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
+            --radius: 10px;
+            --radius-sm: 6px;
+        }
+        :root[data-theme="dark"] {
+            --bg-main: #0d1117;
+            --bg-surface: #161b22;
+            --bg-surface-2: #1c2129;
+            --border: #2d333b;
+            --border-light: #262c34;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent: #58a6ff;
+            --accent-hover: #79b8ff;
+            --accent-bg: rgba(88,166,255,0.1);
+            --red: #f85149;
+            --red-bg: rgba(248,81,73,0.1);
+            --green: #3fb950;
+            --green-bg: rgba(63,185,80,0.1);
+            --yellow: #d29922;
+            --yellow-bg: rgba(210,153,34,0.1);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.3);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.4);
+        }
+
+        /* ========== Reset & Base ========== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 15px; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-main);
+            color: var(--text);
+            line-height: 1.7;
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+        button { font-family: inherit; }
+        input, textarea { font-family: inherit; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* ========== Layout ========== */
+        .app {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            grid-template-rows: 1fr;
+            height: 100vh;
+            transition: grid-template-columns 0.3s ease;
+        }
+        .app.chat-open {
+            grid-template-columns: 260px 1fr 360px;
+        }
+
+        /* ========== Sidebar ========== */
+        .sidebar {
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .sidebar-top {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .sidebar-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .sidebar-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+        .sidebar-btns {
+            display: flex;
+            gap: 6px;
+        }
+        .sidebar-btns button {
+            flex: 1;
+            padding: 6px 0;
+            font-size: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-surface);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .sidebar-btns button:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--accent-bg);
+        }
+        .sidebar-btns .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .sidebar-btns .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .sidebar-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 12px;
+        }
+
+        /* Collapsible categories */
+        .cat-group { margin-bottom: 4px; }
+        .cat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.15s;
+            user-select: none;
+        }
+        .cat-header:hover { background: var(--bg-surface-2); }
+        .cat-header-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cat-arrow {
+            font-size: 10px;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .cat-group.open .cat-arrow { transform: rotate(90deg); }
+        .cat-name {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+        .cat-progress {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .cat-docs {
+            display: none;
+            padding-left: 8px;
+            margin-bottom: 8px;
+        }
+        .cat-group.open .cat-docs { display: block; }
+        .doc-link {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 6px 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .doc-link:hover { background: var(--accent-bg); color: var(--accent); }
+        .doc-link.active { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+
+        /* ========== API Config in Sidebar ========== */
+        .sidebar-config {
+            border-top: 1px solid var(--border-light);
+            flex-shrink: 0;
+        }
+        .config-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            transition: background 0.15s;
+        }
+        .config-toggle:hover { background: var(--bg-surface-2); }
+        .config-toggle-arrow {
+            font-size: 10px;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .config-body {
+            display: none;
+            padding: 4px 16px 14px;
+            gap: 6px;
+            flex-direction: column;
+        }
+        .config-body.open { display: flex; }
+        .config-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .config-row label { width: 40px; flex-shrink: 0; text-align: right; }
+        .config-row input {
+            flex: 1;
+            padding: 5px 8px;
+            font-size: 11px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-surface);
+            color: var(--text);
+            outline: none;
+        }
+        .config-row input:focus { border-color: var(--accent); }
+
+        /* ========== Main ========== */
+        .main {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .tabs {
+            display: flex;
+            gap: 0;
+            padding: 0 40px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-surface);
+            flex-shrink: 0;
+        }
+        .tab-btn {
+            padding: 14px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-bottom: -1px;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+        .pane {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 36px 40px;
+        }
+        .pane.active { display: flex; flex-direction: column; align-items: center; }
+
+        /* ========== Flashcard ========== */
+        .card-stage {
+            perspective: 1400px;
+            width: 100%;
+            max-width: 720px;
+            min-height: 320px;
+            max-height: 65vh;
+            cursor: pointer;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-inner.flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            padding: 36px 44px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .card-back { transform: rotateY(180deg); }
+        .card-tag {
+            position: sticky;
+            top: 0;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            background: var(--bg-surface);
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            z-index: 1;
+        }
+        .card-q {
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.65;
+            text-align: center;
+            color: var(--text);
+            margin: auto 0;
+            padding: 0 16px;
+        }
+        .card-hint {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 12px;
+        }
+        .card-a {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text);
+            word-break: break-word;
+        }
+        .card-a h1, .card-a h2, .card-a h3 { margin: 14px 0 8px; font-weight: 600; }
+        .card-a h1 { font-size: 19px; }
+        .card-a h2 { font-size: 16px; border-bottom: 1px solid var(--border-light); padding-bottom: 4px; }
+        .card-a h3 { font-size: 14px; }
+        .card-a p { margin-bottom: 10px; }
+        .card-a strong { font-weight: 600; }
+        .card-a ul, .card-a ol { padding-left: 20px; margin-bottom: 10px; }
+        .card-a li { margin-bottom: 4px; }
+        .card-a code {
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border-light);
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-size: 13px;
+        }
+        .card-a pre {
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        .card-a pre code { background: none; border: none; padding: 0; }
+        .card-a blockquote {
+            border-left: 3px solid var(--accent);
+            background: var(--accent-bg);
+            padding: 10px 16px;
+            margin: 12px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        .card-a table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        .card-a th, .card-a td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+        .card-a th { background: var(--bg-surface-2); font-weight: 600; }
+
+        .card-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            height: 100%;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .review-btns {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            width: 100%;
+            max-width: 720px;
+            flex-shrink: 0;
+        }
+        .rbtn {
+            padding: 10px 28px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid;
+            position: relative;
+            overflow: hidden;
+        }
+        .rbtn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.4s;
+            pointer-events: none;
+        }
+        .rbtn.flash-green::after { background: var(--green); opacity: 1; animation: flashOut 0.6s forwards; }
+        .rbtn.flash-yellow::after { background: var(--yellow); opacity: 1; animation: flashOut 0.6s forwards; }
+        .rbtn.flash-red::after { background: var(--red); opacity: 1; animation: flashOut 0.6s forwards; }
+        @keyframes flashOut { 0% { opacity: 0.3; } 100% { opacity: 0; } }
+
+        .rbtn-forgot { color: var(--red); border-color: var(--red); background: var(--red-bg); }
+        .rbtn-forgot:hover { background: var(--red); color: #fff; }
+        .rbtn-fuzzy { color: var(--yellow); border-color: var(--yellow); background: var(--yellow-bg); }
+        .rbtn-fuzzy:hover { background: var(--yellow); color: #fff; }
+        .rbtn-know { color: var(--green); border-color: var(--green); background: var(--green-bg); }
+        .rbtn-know:hover { background: var(--green); color: #fff; }
+
+        /* ========== Reader ========== */
+        .reader {
+            width: 100%;
+            max-width: 760px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            padding: 40px 44px;
+        }
+        .reader-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .reader-body {
+            font-size: 14.5px;
+            line-height: 1.85;
+            color: var(--text);
+            word-break: break-word;
+        }
+        .reader-body h1, .reader-body h2, .reader-body h3 { margin: 20px 0 10px; font-weight: 600; }
+        .reader-body h2 { font-size: 19px; border-bottom: 1px solid var(--border-light); padding-bottom: 4px; }
+        .reader-body h3 { font-size: 16px; }
+        .reader-body p { margin-bottom: 12px; }
+        .reader-body strong { font-weight: 600; }
+        .reader-body ul, .reader-body ol { padding-left: 20px; margin-bottom: 12px; }
+        .reader-body li { margin-bottom: 4px; }
+        .reader-body code {
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border-light);
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-size: 13px;
+        }
+        .reader-body pre {
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        .reader-body pre code { background: none; border: none; padding: 0; }
+        .reader-body blockquote {
+            border-left: 3px solid var(--accent);
+            background: var(--accent-bg);
+            padding: 10px 16px;
+            margin: 12px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        .reader-body table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        .reader-body th, .reader-body td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+        .reader-body th { background: var(--bg-surface-2); font-weight: 600; }
+        .reader-footer {
+            margin-top: 36px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .reader-footer span { font-size: 12px; color: var(--text-muted); }
+        .interview-btn {
+            padding: 9px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .interview-btn:hover { background: var(--accent-hover); }
+
+        /* ========== Empty state ========== */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+        .empty-state-title { font-size: 18px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+        .empty-state-sub { font-size: 13px; line-height: 1.6; max-width: 320px; }
+
+        /* ========== Chat Panel ========== */
+        .chat {
+            background: var(--bg-surface);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        .chat-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .chat-header h3 { font-size: 15px; font-weight: 600; }
+        .chat-header-actions { display: flex; gap: 8px; align-items: center; }
+        .chat-header-actions button {
+            padding: 5px 12px;
+            font-size: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-surface);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .chat-header-actions button:hover { color: var(--accent); border-color: var(--accent); }
+        .chat-close-btn {
+            width: 32px !important;
+            height: 32px !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px !important;
+            border-radius: 50% !important;
+            background: var(--bg-surface) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text-muted) !important;
+            cursor: pointer;
+            transition: all 0.15s !important;
+        }
+        .chat-close-btn:hover { background: var(--bg-surface-2) !important; color: var(--text) !important; }
+
+        .chat-msgs {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .msg {
+            max-width: 88%;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            font-size: 13.5px;
+            line-height: 1.7;
+            word-break: break-word;
+        }
+        .msg-ai {
+            align-self: flex-start;
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border-light);
+            color: var(--text);
+        }
+        .msg-user {
+            align-self: flex-end;
+            background: var(--accent);
+            color: #fff;
+        }
+        .msg-ai h1, .msg-ai h2, .msg-ai h3 { margin: 10px 0 6px; font-weight: 600; font-size: 14px; color: var(--accent); }
+        .msg-ai p { margin-bottom: 6px; }
+        .msg-ai code { background: var(--bg-main); border-radius: 2px; padding: 0 4px; font-size: 12px; }
+        .msg-ai pre { background: var(--bg-main); border-radius: 4px; padding: 10px; overflow-x: auto; margin: 6px 0; font-size: 12px; }
+        .msg-ai pre code { background: none; padding: 0; }
+        .msg-ai blockquote { border-left: 2px solid var(--accent); padding-left: 10px; color: var(--text-muted); margin: 6px 0; }
+        .msg-ai ul, .msg-ai ol { padding-left: 16px; margin: 4px 0; }
+        .msg-ai strong { font-weight: 600; }
+
+        .chat-input-area {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            background: var(--bg-surface);
+        }
+        .chat-textarea {
+            flex: 1;
+            min-height: 40px;
+            max-height: 100px;
+            padding: 9px 12px;
+            font-size: 13.5px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-surface-2);
+            color: var(--text);
+            resize: none;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .chat-textarea:focus { border-color: var(--accent); }
+        .mic-btn {
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-surface);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .mic-btn:hover { color: var(--text); border-color: var(--text); }
+        .mic-btn.recording {
+            border-color: var(--red);
+            color: var(--red);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.2); }
+            70% { box-shadow: 0 0 0 8px rgba(220,38,38,0); }
+        }
+        .send-btn {
+            padding: 0 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .send-btn:hover { background: var(--accent-hover); }
+
+        /* Chat toggle FAB */
+        .chat-toggle {
+            position: fixed;
+            right: 16px;
+            bottom: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-md);
+            z-index: 100;
+            transition: transform 0.15s;
+        }
+        .chat-toggle:hover { transform: scale(1.1); }
+        .app.chat-open .chat-toggle { display: none; }
+        .app:not(.chat-open) .chat { display: none; }
+
+        /* ========== Onboarding Overlay ========== */
+        .onboarding {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+        .onboarding-card {
+            background: var(--bg-surface);
+            border-radius: 14px;
+            padding: 40px 48px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+        .onboarding-card h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        .onboarding-steps {
+            text-align: left;
+            margin: 20px 0 28px;
+        }
+        .onboarding-step {
+            display: flex;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .onboarding-step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent-bg);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .onboarding-dismiss {
+            padding: 10px 32px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .onboarding-dismiss:hover { background: var(--accent-hover); }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        /* ========== Responsive ========== */
+        @media (max-width: 900px) {
+            .app { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .app.chat-open { grid-template-columns: 1fr 300px; }
+            .pane { padding: 20px; }
+            .tabs { padding: 0 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <div class="sidebar-title">AI PM 面试特训</div>
+                <div class="sidebar-sub">卡片记忆与压力面试模拟</div>
+                <div class="sidebar-btns">
+                    <button id="themeBtn" onclick="toggleTheme()">暗色模式</button>
+                    <button onclick="resetAllMemory()">重置进度</button>
+                </div>
+            </div>
+            <div class="sidebar-list" id="catList"></div>
+            <!-- API Config at bottom -->
+            <div class="sidebar-config">
+                <button class="config-toggle" onclick="toggleConfig()">
+                    <span>API 配置</span>
+                    <span class="config-toggle-arrow" id="configArrow">></span>
+                </button>
+                <div class="config-body" id="configBody">
+                    <div class="config-row"><label>接口</label><input type="text" id="cfgEndpoint" placeholder="https://api.deepseek.com/v1"></div>
+                    <div class="config-row"><label>密钥</label><input type="password" id="cfgKey" placeholder="API Key"></div>
+                    <div class="config-row"><label>模型</label><input type="text" id="cfgModel" placeholder="deepseek-chat"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+            <div class="tabs">
+                <button class="tab-btn active" id="tabCard" onclick="switchTab('card')">刷题模式</button>
+                <button class="tab-btn" id="tabRead" onclick="switchTab('read')">精读模式</button>
+            </div>
+            <div class="pane active" id="paneCard">
+                <div class="card-stage" onclick="flipCard()">
+                    <div class="card-inner" id="cardInner">
+                        <div class="card-face" id="cardFront">
+                            <div class="card-tag" id="tagFront">加载中...</div>
+                            <div class="card-q" id="cardQ">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">[ ]</div>
+                                    <div class="empty-state-title">选择一道题开始</div>
+                                    <div class="empty-state-sub">点击左侧文档列表，系统将自动为你加载面试真题</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="card-tag" id="tagBack">加载中...</div>
+                            <div class="card-a" id="cardA">答案加载中...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="review-btns">
+                    <button class="rbtn rbtn-forgot" id="btnForgot" onclick="submitReview(1)">忘记了</button>
+                    <button class="rbtn rbtn-fuzzy" id="btnFuzzy" onclick="submitReview(3)">模糊</button>
+                    <button class="rbtn rbtn-know" id="btnKnow" onclick="submitReview(5)">认识</button>
+                </div>
+            </div>
+            <div class="pane" id="paneRead">
+                <div class="reader">
+                    <div class="reader-title" id="readTitle">请选择文档开始研读</div>
+                    <div class="reader-body" id="readBody">
+                        在左侧大纲中选择任意面试资料，系统将为您呈现排版精美的技术精读。
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Chat -->
+        <section class="chat" id="chatPanel">
+            <div class="chat-header">
+                <h3>模拟面试官</h3>
+                <div class="chat-header-actions">
+                    <button onclick="clearChat()">清空对话</button>
+                    <button class="chat-close-btn" onclick="toggleChat()" title="关闭面板">x</button>
+                </div>
+            </div>
+            <div class="chat-msgs" id="chatMsgs">
+                <div class="msg msg-ai">
+                    <strong>大厂总监级教官</strong>：您好，我是面试教官。请先选择一道题目，然后点击卡片上的<strong>"发起模拟面试"</strong>按钮，或直接在下方输入您的回答。我将针对您的实操深度进行压力质询。
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <button class="mic-btn" id="micBtn" onclick="toggleVoice()" title="语音转文字"></button>
+                <textarea class="chat-textarea" id="chatIn" placeholder="输入答案（Enter发送，Shift+Enter换行）..." onkeydown="onChatKey(event)"></textarea>
+                <button class="send-btn" onclick="sendChat()">发送</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Chat FAB -->
+    <button class="chat-toggle" id="chatToggle" onclick="toggleChat()" title="打开面试官"></button>
+
+    <!-- Onboarding overlay -->
+    <div class="onboarding" id="onboarding" style="display:none">
+        <div class="onboarding-card">
+            <h2>欢迎使用 AI PM 面试特训</h2>
+            <div class="onboarding-steps">
+                <div class="onboarding-step">
+                    <span class="onboarding-step-num">1</span>
+                    <span>在左侧边栏选择一个文档分类，展开后点击具体题目</span>
+                </div>
+                <div class="onboarding-step">
+                    <span class="onboarding-step-num">2</span>
+                    <span>查看面试问题后，点击卡片翻转查看参考答案</span>
+                </div>
+                <div class="onboarding-step">
+                    <span class="onboarding-step-num">3</span>
+                    <span>根据记忆程度点击「认识 / 模糊 / 忘记了」，系统将智能安排复习</span>
+                </div>
+                <div class="onboarding-step">
+                    <span class="onboarding-step-num">4</span>
+                    <span>点击卡片上的「发起模拟面试」，与 AI 面试官进行压力对练</span>
+                </div>
+            </div>
+            <button class="onboarding-dismiss" onclick="dismissOnboarding()">开始使用</button>
+        </div>
+    </div>
+
+    <script src="interview_data.js"></script>
+    <script>
+    // ============================
+    // State
+    // ============================
+    let currentDoc = null;
+    let currentCard = null;
+    let todayQueue = [];
+    let queueIdx = 0;
+    let chatSession = [];
+    let recognition = null;
+    let isRecording = false;
+    let catOpenState = {};
+
+    // ============================
+    // SM-2 Memory
+    // ============================
+    const MEM_KEY = "INTERVIEW_MEM";
+    function getDB() { return JSON.parse(localStorage.getItem(MEM_KEY) || "{}"); }
+    function saveDB(db) { localStorage.setItem(MEM_KEY, JSON.stringify(db)); }
+
+    function sm2(cardId, q) {
+        const db = getDB();
+        const s = db[cardId] || { interval: 1, ease: 2.5, rep: 0 };
+        let { interval, ease, rep } = s;
+        if (q >= 3) {
+            if (rep === 0) interval = 1;
+            else if (rep === 1) interval = 6;
+            else interval = Math.round(interval * ease);
+            rep++;
+            ease = ease + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+        } else {
+            rep = 0; interval = 1;
+            ease = Math.max(1.3, ease - 0.2);
+        }
+        db[cardId] = { interval, ease, rep, next: Date.now() + interval * 86400000 };
+        saveDB(db);
+    }
+
+    function resetAllMemory() {
+        if (!confirm("确定清空所有学习数据？")) return;
+        localStorage.removeItem(MEM_KEY);
+        localStorage.removeItem("LLM_CACHE");
+        renderSidebar();
+        buildQueue();
+        alert("已重置");
+    }
+
+    // ============================
+    // Sidebar
+    // ============================
+    function renderSidebar() {
+        const el = document.getElementById("catList");
+        el.innerHTML = "";
+        const db = getDB();
+        (window.INTERVIEW_DATA.categories || []).forEach((cat, idx) => {
+            let total = 0, mastered = 0;
+            cat.docs.forEach(doc => {
+                getCards(doc).forEach(c => {
+                    total++;
+                    if (db[c.id] && db[c.id].rep > 2) mastered++;
+                });
+            });
+            const pct = total ? Math.round(mastered / total * 100) : 0;
+            const isOpen = catOpenState[cat.id] !== undefined ? catOpenState[cat.id] : (idx === 0);
+            const openClass = isOpen ? " open" : "";
+
+            let docs = cat.docs.map(d =>
+                `<button class="doc-link" id="dl-${safeId(d.id)}" onclick="event.stopPropagation();loadDoc('${cat.id}','${d.id}')">${esc(d.title)}</button>`
+            ).join("");
+
+            el.innerHTML += `
+                <div class="cat-group${openClass}" id="cat-${safeId(cat.id)}">
+                    <div class="cat-header" onclick="toggleCat('${cat.id}')">
+                        <div class="cat-header-left">
+                            <span class="cat-arrow">></span>
+                            <span class="cat-name">${esc(cat.name)}</span>
+                        </div>
+                        <span class="cat-progress">${pct}%</span>
+                    </div>
+                    <div class="cat-docs">${docs}</div>
+                </div>`;
+        });
+    }
+
+    function toggleCat(catId) {
+        const el = document.getElementById("cat-" + safeId(catId));
+        if (!el) return;
+        const isOpen = el.classList.toggle("open");
+        catOpenState[catId] = isOpen;
+    }
+
+    function safeId(s) { return s.replace(/[^a-zA-Z0-9]/g, "_"); }
+    function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+    // ============================
+    // Markdown
+    // ============================
+    function md(t) {
+        if (!t) return "";
+        let h = t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        h = h.replace(/```([\s\S]*?)```/g, (_, c) => `<pre><code>${c.trim()}</code></pre>`);
+        h = h
+            .replace(/^###\s+(.*)$/gm, '<h3>$1</h3>')
+            .replace(/^##\s+(.*)$/gm, '<h2>$1</h2>')
+            .replace(/^#\s+(.*)$/gm, '<h1>$1</h1>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/^\s*[-*]\s+(.*)$/gm, '<li>$1</li>')
+            .replace(/^&gt;\s+(.*)$/gm, '<blockquote>$1</blockquote>');
+        h = h.replace(/\n\n/g, '<br><br>');
+        h = h.replace(/^\|(.+)\|$/gm, (_, row) => {
+            const cells = row.split("|").map(c => c.trim());
+            return "<tr>" + cells.map(c => `<td>${c}</td>`).join("") + "</tr>";
+        });
+        h = h.replace(/<\/tr>\s*<tr>/g, "</tr><tr>");
+        h = h.replace(/((?:<tr>.*<\/tr>\s*)+)/g, '<table>$1</table>');
+        return h;
+    }
+
+    // ============================
+    // Cards
+    // ============================
+    const CACHE_KEY = "LLM_CACHE";
+    function getCache() { return JSON.parse(localStorage.getItem(CACHE_KEY) || "{}"); }
+    function saveCache(c) { localStorage.setItem(CACHE_KEY, JSON.stringify(c)); }
+
+    function getCards(doc) {
+        const c = getCache();
+        if (c[doc.relpath] && c[doc.relpath].length > 0) return c[doc.relpath];
+        return doc.cards || [];
+    }
+
+    // ============================
+    // Load Document
+    // ============================
+    function loadDoc(catId, docId) {
+        const cat = window.INTERVIEW_DATA.categories.find(c => c.id === catId);
+        const doc = cat.docs.find(d => d.id === docId);
+        currentDoc = doc;
+
+        document.querySelectorAll(".doc-link").forEach(b => b.classList.remove("active"));
+        const btn = document.getElementById("dl-" + safeId(docId));
+        if (btn) btn.classList.add("active");
+
+        const cards = getCards(doc);
+        document.getElementById("readTitle").textContent = doc.title;
+        document.getElementById("readBody").innerHTML = md(doc.content) +
+            `<div class="reader-footer"><span>共 ${cards.length} 道面试题</span><button class="interview-btn" onclick="startInterview()">发起模拟面试</button></div>`;
+
+        // Load card first, then user can switch to reader if they want
+        switchTab("card");
+        genCards(doc, cat.name);
+    }
+
+    // ============================
+    // LLM Card Generation
+    // ============================
+    const PROXY = "http://127.0.0.1:8010";
+
+    async function genCards(doc, catName) {
+        const cache = getCache();
+        if (cache[doc.relpath] && cache[doc.relpath].length > 0) {
+            loadCard(cache[doc.relpath][0], catName);
+            return;
+        }
+        let ep = localStorage.getItem("LLM_EP");
+        const key = localStorage.getItem("LLM_KEY");
+        const model = localStorage.getItem("LLM_MODEL") || "deepseek-chat";
+
+        if (!ep || !key) {
+            if (doc.cards && doc.cards[0]) loadCard(doc.cards[0], catName);
+            return;
+        }
+
+        document.getElementById("cardInner").classList.remove("flipped");
+        document.getElementById("tagFront").textContent = catName;
+        document.getElementById("cardQ").innerHTML = '<div class="card-loader"><div class="spinner"></div><div>正在生成面试真题...</div></div>';
+
+        const prompt = `你是一位大厂首席AI产品总监。基于以下文档，生成3-5道大厂AI PM压力面试真题。
+文档：${doc.title}
+${doc.content}
+要求：场景化提问+大厂级回答（Markdown）。严格输出JSON数组：[{"question":"...","answer":"..."}]`;
+
+        async function call(url) {
+            return fetch(url + "/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+                body: JSON.stringify({ model, messages: [{role:"system",content:"Output only valid JSON."},{role:"user",content:prompt}], temperature: 0.3 })
+            });
+        }
+        try {
+            let resp;
+            try { resp = await call(ep); } catch(e) { resp = await call(PROXY); }
+            if (!resp.ok) throw new Error("API failed");
+            const data = await resp.json();
+            let txt = data.choices[0].message.content.trim();
+            if (txt.startsWith("```json")) txt = txt.slice(7);
+            if (txt.startsWith("```")) txt = txt.slice(3);
+            if (txt.endsWith("```")) txt = txt.slice(0, -3);
+            const cards = JSON.parse(txt.trim());
+            cards.forEach((c, i) => { c.id = "llm_" + doc.id.replace(/\.md/,"") + "_" + i; });
+            const db = getCache();
+            db[doc.relpath] = cards;
+            saveCache(db);
+            renderSidebar();
+            loadCard(cards[0], catName);
+        } catch(e) {
+            console.error("LLM failed:", e);
+            if (doc.cards && doc.cards[0]) loadCard(doc.cards[0], catName);
+        }
+    }
+
+    function loadCard(card, catName) {
+        currentCard = card;
+        document.getElementById("cardInner").classList.remove("flipped");
+        document.getElementById("tagFront").textContent = catName;
+        document.getElementById("tagBack").textContent = catName;
+        document.getElementById("cardQ").innerHTML = `
+            <div>${card.question}</div>
+            <div style="margin-top:20px">
+                <button onclick="event.stopPropagation();startInterview()" style="padding:8px 18px;font-size:12px;color:#fff;background:var(--accent);border:none;border-radius:var(--radius-sm);cursor:pointer;font-weight:600;">发起模拟面试</button>
+            </div>
+            <div class="card-hint">点击卡片翻转查看答案</div>`;
+        document.getElementById("cardA").innerHTML = md(card.answer);
+    }
+
+    function flipCard() {
+        if (document.querySelector(".card-loader")) return;
+        document.getElementById("cardInner").classList.toggle("flipped");
+    }
+
+    // ============================
+    // Queue
+    // ============================
+    function buildQueue() {
+        todayQueue = [];
+        const db = getDB();
+        const now = Date.now();
+        (window.INTERVIEW_DATA.categories || []).forEach(cat => {
+            cat.docs.forEach(doc => {
+                getCards(doc).forEach(c => {
+                    const s = db[c.id];
+                    if (!s || s.next <= now) todayQueue.push({ card: c, catName: cat.name });
+                });
+            });
+        });
+        todayQueue.sort(() => Math.random() - 0.5);
+        queueIdx = 0;
+        if (todayQueue.length > 0) {
+            loadCard(todayQueue[0].card, todayQueue[0].catName);
+        } else {
+            const all = [];
+            (window.INTERVIEW_DATA.categories || []).forEach(cat => {
+                cat.docs.forEach(doc => getCards(doc).forEach(c => all.push({ card: c, catName: cat.name })));
+            });
+            if (all.length) { const r = all[Math.floor(Math.random() * all.length)]; loadCard(r.card, r.catName); }
+        }
+    }
+
+    function submitReview(q) {
+        if (!currentCard) return;
+        sm2(currentCard.id, q);
+        renderSidebar();
+
+        // Flash feedback
+        const btnMap = { 1: "btnForgot", 3: "btnFuzzy", 5: "btnKnow" };
+        const flashMap = { 1: "flash-red", 3: "flash-yellow", 5: "flash-green" };
+        const btn = document.getElementById(btnMap[q]);
+        if (btn) {
+            btn.classList.add(flashMap[q]);
+            setTimeout(() => btn.classList.remove(flashMap[q]), 600);
+        }
+
+        if (todayQueue.length > 0) {
+            queueIdx = (queueIdx + 1) % todayQueue.length;
+            loadCard(todayQueue[queueIdx].card, todayQueue[queueIdx].catName);
+        } else {
+            buildQueue();
+        }
+    }
+
+    // ============================
+    // Tabs
+    // ============================
+    function switchTab(t) {
+        document.getElementById("tabCard").classList.toggle("active", t === "card");
+        document.getElementById("tabRead").classList.toggle("active", t === "read");
+        document.getElementById("paneCard").classList.toggle("active", t === "card");
+        document.getElementById("paneRead").classList.toggle("active", t === "read");
+    }
+
+    // ============================
+    // Theme
+    // ============================
+    function toggleTheme() {
+        const html = document.documentElement;
+        const dark = html.dataset.theme === "dark";
+        html.dataset.theme = dark ? "light" : "dark";
+        document.getElementById("themeBtn").textContent = dark ? "暗色模式" : "亮色模式";
+    }
+
+    // ============================
+    // Config panel
+    // ============================
+    function toggleConfig(forceOpen = null) {
+        const body = document.getElementById("configBody");
+        const arrow = document.getElementById("configArrow");
+        const shouldOpen = forceOpen !== null ? forceOpen : !body.classList.contains("open");
+        if (shouldOpen) {
+            body.classList.add("open");
+            arrow.style.transform = "rotate(90deg)";
+        } else {
+            body.classList.remove("open");
+            arrow.style.transform = "";
+    // Chat
+    // ============================
+    function toggleChat() {
+        document.getElementById("app").classList.toggle("chat-open");
+    }
+
+    function clearChat() {
+        chatSession = [];
+        document.getElementById("chatMsgs").innerHTML = '<div class="msg msg-ai">面试对话已清空。可随时重新发起特训。</div>';
+    }
+
+    function startInterview() {
+        if (!currentCard) { alert("请先选择一个文档卡片"); return; }
+        document.getElementById("app").classList.add("chat-open");
+        chatSession = [];
+        document.getElementById("chatMsgs").innerHTML = `<div class="msg msg-ai"><strong>面试官</strong>：压力面试开始！考题：【${esc(currentCard.question)}】。请在下方输入你的回答，我将进行连环追问。</div>`;
+
+        const sysPrompt = `你是一位大厂首席AI产品总监。考题：【${currentCard.question}】。参考答案：【${currentCard.answer}】。
+性格：极其严苛，痛恨套话。每轮针对薄弱环节深挖。3轮后输出综合报告：
+### 得分(0-100) / 亮点 / 硬伤 / 黄金话术模板
+现在发出第一声追问。`;
+        chatSession.push({ role: "system", content: sysPrompt });
+    }
+
+    async function sendChat() {
+        stopVoice();
+        const el = document.getElementById("chatIn");
+        const text = el.value.trim();
+        if (!text) return;
+        if (chatSession.length === 0) startInterview();
+        el.value = "";
+        appendMsg("user", text);
+        chatSession.push({ role: "user", content: text });
+
+        let ep = localStorage.getItem("LLM_EP");
+        const key = localStorage.getItem("LLM_KEY");
+        const model = localStorage.getItem("LLM_MODEL") || "deepseek-chat";
+        if (!ep || !key) { 
+            const errorBubble = appendMsg("ai", `<strong>⚠️ 请先配置 API 接口和密钥</strong><br>
+            您需要配置 API 接口、密钥和模型名称，才能与 AI 面试官进行模拟面试。<br><br>
+            <strong>如何快速配置？</strong><br>
+            1. 推荐使用 <strong>DeepSeek</strong> 接口：<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;- <strong>接口</strong>: <code>https://api.deepseek.com/v1</code><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;- <strong>模型</strong>: <code>deepseek-chat</code><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;- <strong>密钥</strong>: 您的 DeepSeek API Key<br>
+            2. 或者是符合 OpenAI 规范的任何大模型中转/代理接口。<br><br>
+            <em>系统已为您自动打开左下角「API 配置」面板。</em>`);
+            toggleConfig(true);
+            return; 
+        }
+
+        const bubble = appendMsg("ai", "正在审视你的回答...");
+
+        async function call(url) {
+            return fetch(url + "/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+                body: JSON.stringify({ model, messages: chatSession, stream: true })
+            });
+        }
+        try {
+            let resp;
+            try { 
+                resp = await call(ep); 
+            } catch(e) { 
+                resp = await call(PROXY); 
+            }
+            
+            if (!resp.ok) { 
+                const errStatus = resp.status;
+                bubble.innerHTML = `<strong>⚠️ 压力面试官：API 请求失败 (HTTP ${errStatus})</strong><br>
+                在 Vercel 生产环境下，当前配置的 API 无法正常响应。<br><br>
+                <strong>如何排查与配置？</strong><br>
+                1. 推荐使用 <strong>DeepSeek</strong> 官方接口：<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;- <strong>接口</strong>: <code>https://api.deepseek.com/v1</code><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;- <strong>模型</strong>: <code>deepseek-chat</code><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;- <strong>密钥</strong>: 您的 DeepSeek API Key（请确认密钥未过期且余额充足）<br>
+                2. 或者是符合 OpenAI 规范的任何大模型中转/代理接口。<br><br>
+                <em>系统已为您自动打开左下角「API 配置」面板。</em>`;
+                toggleConfig(true);
+                return; 
+            }
+            
+            const reader = resp.body.getReader();
+            const dec = new TextDecoder("utf-8");
+            let done = false, aiText = "";
+            bubble.innerHTML = "";
+            let buffer = "";
+            
+            while (!done) {
+                const { value, done: d } = await reader.read();
+                done = d;
+                buffer += dec.decode(value || new Uint8Array(), { stream: !done });
+                const lines = buffer.split("\n");
+                
+                // Keep the last incomplete line in the buffer
+                buffer = lines.pop();
+                
+                for (const line of lines) {
+                    const cleanLine = line.trim();
+                    if (!cleanLine) continue;
+                    if (cleanLine.startsWith("data:")) {
+                        const dataContent = cleanLine.slice(5).trim();
+                        if (dataContent === "[DONE]") continue;
+                        try {
+                            const parsed = JSON.parse(dataContent);
+                            const delta = parsed.choices?.[0]?.delta?.content;
+                            if (delta) {
+                                aiText += delta;
+                                bubble.innerHTML = md(aiText);
+                                document.getElementById("chatMsgs").scrollTop = 99999;
+                            }
+                        } catch(e) {
+                            // Ignore incomplete JSON parsing error
+                        }
+                    }
+                }
+            }
+            chatSession.push({ role: "assistant", content: aiText });
+        } catch(err) {
+            bubble.innerHTML = `<strong>⚠️ 压力面试官：网络连接错误</strong><br>
+            无法连接至接口：<code>${ep}</code><br>
+            错误详情: <code>${err.message}</code><br><br>
+            <strong>如何排查与配置？</strong><br>
+            1. 请确认侧边栏底部的「API 配置」中，接口地址、密钥（API Key）已正确输入。<br>
+            2. 推荐使用 <strong>DeepSeek</strong> 官方接口：<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;- <strong>接口</strong>: <code>https://api.deepseek.com/v1</code><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;- <strong>模型</strong>: <code>deepseek-chat</code><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;- <strong>密钥</strong>: 您的 DeepSeek API Key<br>
+            3. 如果使用的是第三方中转，请确认没有跨域(CORS)限制或者中转服务可用。<br><br>
+            <em>系统已为您自动打开左下角「API 配置」面板。</em>`;
+            toggleConfig(true);
+        }
+    }
+
+    function appendMsg(role, text) {
+        const box = document.getElementById("chatMsgs");
+        const d = document.createElement("div");
+        d.className = "msg msg-" + role;
+        d.innerHTML = role === "user" ? esc(text).replace(/\n/g,"<br>") : md(text);
+        box.appendChild(d);
+        box.scrollTop = 99999;
+        return d;
+    }
+
+    function onChatKey(e) {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); }
+    }
+
+    // ============================
+    // Voice
+    // ============================
+    function initVoice() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { document.getElementById("micBtn").style.display = "none"; return; }
+        recognition = new SR();
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.lang = "zh-CN";
+        recognition.onstart = () => { isRecording = true; document.getElementById("micBtn").classList.add("recording"); };
+        recognition.onend = () => { isRecording = false; document.getElementById("micBtn").classList.remove("recording"); };
+        recognition.onresult = (ev) => {
+            let t = "";
+            for (let i = ev.resultIndex; i < ev.results.length; i++) { if (ev.results[i].isFinal) t += ev.results[i][0].transcript; }
+            if (t) { const inp = document.getElementById("chatIn"); inp.value = (inp.value + " " + t).trim(); }
+        };
+        recognition.onerror = () => stopVoice();
+    }
+    function toggleVoice() {
+        if (!recognition) initVoice();
+        if (!recognition) { alert("浏览器不支持语音识别，请使用 Chrome/Edge"); return; }
+        isRecording ? stopVoice() : startVoice();
+    }
+    function startVoice() { try { recognition.start(); } catch(e) {} }
+    function stopVoice() { try { recognition.stop(); } catch(e) {} }
+
+    // ============================
+    // Onboarding
+    // ============================
+    function showOnboarding() {
+        if (localStorage.getItem("ONBOARDED")) return;
+        document.getElementById("onboarding").style.display = "flex";
+    }
+    function dismissOnboarding() {
+        document.getElementById("onboarding").style.display = "none";
+        localStorage.setItem("ONBOARDED", "1");
+    }
+
+    // ============================
+    // Config persistence
+    // ============================
+    function bindCfg(id, key) {
+        const el = document.getElementById(id);
+        el.addEventListener("input", () => localStorage.setItem(key, el.value.trim()));
+    }
+    bindCfg("cfgEndpoint", "LLM_EP");
+    bindCfg("cfgKey", "LLM_KEY");
+    bindCfg("cfgModel", "LLM_MODEL");
+
+    // ============================
+    // Init
+    // ============================
+    window.addEventListener("DOMContentLoaded", () => {
+        const defEp = "https://token-plan-cn.xiaomimimo.com/v1";
+        const defKey = "tp-c2fupipntb1oc3rm3w4ogp9llw9gn3jwvo931ziy9qyin5of";
+        if (!localStorage.getItem("LLM_EP")) localStorage.setItem("LLM_EP", defEp);
+        if (!localStorage.getItem("LLM_KEY")) localStorage.setItem("LLM_KEY", defKey);
+        if (!localStorage.getItem("LLM_MODEL")) localStorage.setItem("LLM_MODEL", "deepseek-chat");
+        document.getElementById("cfgEndpoint").value = localStorage.getItem("LLM_EP");
+        document.getElementById("cfgKey").value = localStorage.getItem("LLM_KEY");
+        document.getElementById("cfgModel").value = localStorage.getItem("LLM_MODEL");
+        renderSidebar();
+        buildQueue();
+        initVoice();
+        showOnboarding();
+    });
+    </script>
+</body>
+</html>
