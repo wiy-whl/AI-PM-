@@ -42,4 +42,4 @@
 *   **面试话术**：“任何模型都会出错。我设计的 Agent 不仅仅是单次调用，我还引入了 Error Handle 机制。当 API 报错‘参数不合法’时，我们的 Agent 必须把报错信息连同当初自己写的规划**再喂回给 LLM**，让 LLM 根据报错自己修正参数重新调用。这就叫拥有**一定自治能力**的智能体。”
 
 ---
-我已经将这份指南放入你的面试包：`d:\PromptX-main\worldbrain\AI_PM_Interview_Pack\function_calling_optimization.md`。
+
